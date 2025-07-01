@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config(); 
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb+srv://Himanshu:DYCb0lWNCBtxcwUL@cluster0.xbqv2.mongodb.net/finance-tracker"); 
+    //console.log(process.env.DB_URL);
+    
+    await mongoose.connect(process.env.DB_URL); 
     console.log(" MongoDB connected successfully");
   } catch (err) {
     console.error(" MongoDB connection error:", err.message);
@@ -10,4 +14,4 @@ const connectDB = async () => {
   }
 };
 
-connectDB();
+export default connectDB;

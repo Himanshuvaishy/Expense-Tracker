@@ -25,14 +25,27 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(200).json({
-      message: "User created successfully",
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+    // ✅ Auto-login after registration (optional but user-friendly)
+    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
+      expiresIn: "1d",
     });
+
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: true,           // Must be true on Render (HTTPS)
+        sameSite: "None",       // Needed for cross-origin
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+      })
+      .status(200)
+      .json({
+        message: "User created successfully",
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+        },
+      });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -58,8 +71,8 @@ const loginUser = async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,           // Must be true on Render (HTTPS)
+        sameSite: "None",       // Needed for cross-origin
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       })
       .status(200)
@@ -67,7 +80,7 @@ const loginUser = async (req, res) => {
         message: "Login successful",
         user: {
           id: user._id,
-          name: user.name, // ✅ return name
+          name: user.name,
           email: user.email,
         },
       });

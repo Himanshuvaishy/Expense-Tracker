@@ -7,7 +7,7 @@ const RegisterPage = () => {
   const { setUser } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(""); // ✅ new
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errMsg, setErrMsg] = useState("");
@@ -21,17 +21,30 @@ const RegisterPage = () => {
     setSuccessMsg("");
 
     try {
+      // ✅ Step 1: Clear any stale local/session data
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // ✅ Step 2: Register new user
       const res = await axios.post(
         "http://localhost:7777/api/auth/register",
-        { name, email, password }, // ✅ include name
+        { name, email, password },
         { withCredentials: true }
       );
 
-      setUser(res.data.user || { name, email }); // ✅ fallback
+      // ✅ Step 3: Save user globally
+      setUser(res.data.user || { name, email });
+
+      // ✅ Step 4: Optional — Clear report cache (in case of refresh or repeated usage)
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("report_saved_"))
+        .forEach((key) => localStorage.removeItem(key));
+
       setSuccessMsg("✅ Registration successful!");
 
+      // ✅ Step 5: Redirect after short delay
       setTimeout(() => {
-        navigate("/");
+        navigate("/"); // will go to dashboard
       }, 1000);
     } catch (err) {
       setErrMsg(err.response?.data?.message || "Registration failed");
@@ -53,7 +66,6 @@ const RegisterPage = () => {
           <p className="text-green-600 text-sm text-center">{successMsg}</p>
         )}
 
-        {/* ✅ Name Field */}
         <input
           type="text"
           className="w-full p-2 border rounded"

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom"; // ✅ Added Link
-import { useAuth } from "../context/AutoContext"; // ✅ Context for auth
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AutoContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -13,18 +13,28 @@ const LoginPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setErrMsg("");
 
     try {
+      // ✅ Clear previous data before login
+      localStorage.clear();
+      sessionStorage.clear();
+
       const res = await axios.post(
         "http://localhost:7777/api/auth/login",
         { email, password },
         { withCredentials: true }
       );
 
-      console.log("Login Success:", res.data);
-      setUser(res.data.user); // ✅ Set user globally
-      setErrMsg("");
-      navigate("/"); // ✅ Navigate to dashboard
+      // ✅ Set the current user in context
+      setUser(res.data.user);
+
+      // ✅ Optional: clear report-related local storage keys
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("report_saved_"))
+        .forEach((key) => localStorage.removeItem(key));
+
+      navigate("/");
     } catch (err) {
       setErrMsg(err.response?.data?.message || "Login failed");
     }
@@ -38,12 +48,10 @@ const LoginPage = () => {
       >
         <h2 className="text-2xl font-bold text-center">Login</h2>
 
-        {/* ✅ Error message */}
         {errMsg && (
           <p className="text-red-500 text-sm text-center">{errMsg}</p>
         )}
 
-        {/* ✅ Register message for new users */}
         <p className="text-sm text-center text-gray-600">
           Don't have an account?{" "}
           <Link to="/register" className="text-blue-600 hover:underline">

@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { toast } from "react-toastify";
 import axios from "axios";
+import { isReportSaved,markReportSaved } from "../utilis/reportStorage";
 import { useAuth } from "../context/AutoContext";
 import { useNavigate } from "react-router-dom";
 import { Pie, Bar, Line } from "react-chartjs-2";
@@ -14,7 +16,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import SmartSuggestionBox from "../components/SmartSuggestionBox"; // ✅
+import SmartSuggestionBox from "../components/SmartSuggestionBox";
+import ReportHistory from "../components/ReportHistory";
 
 ChartJS.register(
   CategoryScale,
@@ -33,12 +36,14 @@ const getMonthName = (num) =>
 const Dashboard = () => {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
-
   const today = new Date();
+
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
   const [data, setData] = useState(null);
+  const reportSavedRef = useRef(false); // 🔄 used to prevent double toast
 
+  // ✅ Define before using it in JSX
   const resetToCurrentMonth = () => {
     setMonth(today.getMonth() + 1);
     setYear(today.getFullYear());
@@ -51,6 +56,7 @@ const Dashboard = () => {
         { withCredentials: true }
       );
       setData(res.data);
+      reportSavedRef.current = false;
     } catch (err) {
       console.error("Error loading dashboard:", err);
     }
@@ -59,6 +65,54 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [month, year]);
+
+useEffect(() => {
+  if (data?.totalSpent > 0 && data?.topCategory && user?.id) {
+    const key = `report_saved_${user.id}_${month}_${year}`;
+    const existing = JSON.parse(localStorage.getItem(key));
+
+    const needsUpdate =
+      !existing ||
+      existing.totalSpent !== data.totalSpent ||
+      existing.topCategory !== data.topCategory;
+
+    if (needsUpdate) {
+      const saveReport = async () => {
+        try {
+          await axios.post("http://localhost:5000/api/save-report", {
+            user_id: user.id,
+            month: getMonthName(month),
+            year,
+            total_spent: data.totalSpent,
+            top_category: data.topCategory,
+            overbudget_categories: data.overbudgetCategories || [],
+          });
+
+          toast.success("📊 Monthly report saved!", {
+            toastId: "monthly-report-toast",
+          });
+
+          // ✅ Save summary in localStorage for change tracking
+          localStorage.setItem(
+            key,
+            JSON.stringify({
+              totalSpent: data.totalSpent,
+              topCategory: data.topCategory,
+              savedAt: new Date().toISOString(),
+            })
+          );
+        } catch (err) {
+          toast.error("❌ Failed to save monthly report", {
+            toastId: "monthly-report-error",
+          });
+          console.error("❌ Error saving report:", err);
+        }
+      };
+
+      saveReport();
+    }
+  }
+}, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
 
   const handleLogout = () => {
     setUser(null);
@@ -123,7 +177,6 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Profile Card */}
         <div className="bg-white shadow rounded p-3 mt-4 md:mt-0 w-full md:w-auto">
           <p className="text-sm text-gray-700">
             <strong>Name:</strong> {user?.name || "N/A"}
@@ -231,15 +284,16 @@ const Dashboard = () => {
               <Line data={lineChartData} />
             </div>
 
-            {/* ✅ Smart Suggestion Box */}
-            {data?.topCategory && data?.totalSpent > 0 && (
-              <div className="bg-white p-4 shadow rounded mb-10">
-                <SmartSuggestionBox
-                  category={data.topCategory}
-                  amount={data.totalSpent}
-                />
-              </div>
-            )}
+            {/* Suggestion Box */}
+            <div className="bg-white p-4 shadow rounded mb-10">
+              <SmartSuggestionBox
+                category={data.topCategory}
+                amount={data.totalSpent}
+              />
+            </div>
+
+            {/* Report History */}
+            <ReportHistory userId={user.id} />
           </>
         )
       ) : (

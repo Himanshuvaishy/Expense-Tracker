@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import BudgetStatusPage from "./pages/BudgetStausPage";
 import SetBudgetPage from "./pages/setBudget";
 import ProtectedRoute from "./components/ProtecteRoute";
+import DeveloperTools from "./components/DeveloperToll";
 
 function App() {
   return (
@@ -40,6 +41,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SetBudgetPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dev-tools"
+          element={
+            <ProtectedRoute>
+              <DeveloperTools />
             </ProtectedRoute>
           }
         />

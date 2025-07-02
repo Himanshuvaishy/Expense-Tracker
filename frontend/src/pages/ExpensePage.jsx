@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../context/AutoContext"; // ✅ Access logged-in user
 
 const ExpensesPage = () => {
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [form, setForm] = useState({
     amount: "",
@@ -23,10 +25,11 @@ const ExpensesPage = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
-
   const navigate = useNavigate();
 
   const fetchExpenses = async () => {
+    if (!user?.id) return;
+
     try {
       const queryParams = new URLSearchParams();
 
@@ -35,6 +38,8 @@ const ExpensesPage = () => {
       if (filters.fromDate) queryParams.append("fromDate", filters.fromDate);
       if (filters.toDate) queryParams.append("toDate", filters.toDate);
       if (filters.search) queryParams.append("search", filters.search);
+
+      queryParams.append("userId", user.id);
 
       const res = await axios.get(
         `http://localhost:7777/api/expenses/getExpenses?${queryParams.toString()}`,
@@ -49,8 +54,20 @@ const ExpensesPage = () => {
   };
 
   useEffect(() => {
-    fetchExpenses();
-  }, []);
+    setFilters({
+      category: "",
+      paymentMethod: "",
+      fromDate: "",
+      toDate: "",
+      search: "",
+    });
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchExpenses();
+    }
+  }, [user?.id]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -70,6 +87,9 @@ const ExpensesPage = () => {
         normalizedForm,
         { withCredentials: true }
       );
+
+      // ✅ Update monthly report
+      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
 
       setForm({
         amount: "",
@@ -91,6 +111,10 @@ const ExpensesPage = () => {
         `http://localhost:7777/api/expenses/deleteExpense/${id}`,
         { withCredentials: true }
       );
+
+      // ✅ Update monthly report
+      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
+
       fetchExpenses();
     } catch (err) {
       console.error("Error deleting expense:", err);
@@ -124,6 +148,10 @@ const ExpensesPage = () => {
         normalizedEditForm,
         { withCredentials: true }
       );
+
+      // ✅ Update monthly report
+      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
+
       setEditingId(null);
       fetchExpenses();
     } catch (err) {
@@ -133,7 +161,6 @@ const ExpensesPage = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {/* ✅ Back Button */}
       <div className="mb-4">
         <button
           onClick={() => navigate("/")}
@@ -145,10 +172,7 @@ const ExpensesPage = () => {
 
       <h1 className="text-2xl font-bold mb-4">Add New Expense</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 bg-white p-4 rounded shadow mb-6"
-      >
+      <form onSubmit={handleSubmit} className="grid gap-4 bg-white p-4 rounded shadow mb-6">
         <input
           type="number"
           name="amount"
@@ -203,7 +227,6 @@ const ExpensesPage = () => {
         </button>
       </form>
 
-      {/* ✅ Filter Section */}
       <div className="mb-6 bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-2">Filter Expenses</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -239,7 +262,6 @@ const ExpensesPage = () => {
               className="border p-2 rounded"
             />
           </div>
-
           <div className="flex flex-col">
             <label className="text-sm text-gray-700 mb-1">To Date</label>
             <input
@@ -251,12 +273,13 @@ const ExpensesPage = () => {
               className="border p-2 rounded"
             />
           </div>
-
           <input
             type="text"
             placeholder="Search notes..."
             value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onChange={(e) =>
+              setFilters({ ...filters, search: e.target.value })
+            }
             className="border p-2 rounded col-span-2"
           />
         </div>
@@ -286,7 +309,6 @@ const ExpensesPage = () => {
         </div>
       </div>
 
-      {/* ✅ Expense List */}
       <h2 className="text-xl font-semibold mb-2">Your Expenses</h2>
 
       {loading ? (
@@ -296,10 +318,7 @@ const ExpensesPage = () => {
       ) : (
         <div className="space-y-4">
           {expenses.map((expense) => (
-            <div
-              key={expense._id}
-              className="border p-4 rounded bg-white shadow"
-            >
+            <div key={expense._id} className="border p-4 rounded bg-white shadow">
               {editingId === expense._id ? (
                 <>
                   <input
@@ -368,7 +387,6 @@ const ExpensesPage = () => {
                       ? `${expense.notes.slice(0, 100)}...`
                       : expense.notes}
                   </p>
-
                   <div className="flex gap-3 mt-2">
                     <button
                       onClick={() => startEdit(expense)}

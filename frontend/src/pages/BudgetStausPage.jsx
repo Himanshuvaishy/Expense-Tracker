@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AutoContext"; // ✅ Import user context
 
 const BudgetStatusPage = () => {
   const [status, setStatus] = useState([]);
@@ -10,9 +11,12 @@ const BudgetStatusPage = () => {
   const [updatedCategory, setUpdatedCategory] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
 
+  const { user } = useAuth(); // ✅ Get logged-in user
   const navigate = useNavigate();
 
   const fetchStatus = async () => {
+    if (!user?.id) return; // ✅ Avoid fetching if user is undefined
+
     try {
       const res = await axios.get("http://localhost:7777/api/budget/status", {
         withCredentials: true,
@@ -25,9 +29,11 @@ const BudgetStatusPage = () => {
     }
   };
 
-  useEffect(() => {
+ useEffect(() => {
+  if (user?.id) {
     fetchStatus();
-  }, []);
+  }
+}, [user?.id]); // ✅ Re-fetch whenever user changes
 
   const handleEdit = (category, currentAmount) => {
     setEditingCategory(category);
@@ -52,7 +58,6 @@ const BudgetStatusPage = () => {
       setToastMessage(`✅ Budget for '${category}' updated!`);
       fetchStatus();
 
-      // Remove highlight and toast after 3 seconds
       setTimeout(() => {
         setUpdatedCategory(null);
         setToastMessage("");
@@ -66,7 +71,6 @@ const BudgetStatusPage = () => {
     <div className="max-w-4xl mx-auto p-6 relative">
       <h1 className="text-2xl font-bold mb-4">📊 Budget Status</h1>
 
-      {/* ✅ Success Toast */}
       {toastMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50">
           {toastMessage}
@@ -159,7 +163,6 @@ const BudgetStatusPage = () => {
             </tbody>
           </table>
 
-          {/* ✅ Buttons */}
           <div className="flex justify-between mt-6">
             <button
               onClick={() => navigate("/")}

@@ -14,12 +14,21 @@ const app = express();
 app.use(express.json());
 
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+const allowedOrigins = [
+  process.env.FRONTEND_URL,       // production frontend (e.g., https://your-frontend.vercel.app)
+  "http://localhost:5173"         // local frontend dev
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
 
 // Routes
 app.use("/api/auth", authRoutes);

@@ -1,22 +1,28 @@
 import Budget from "../models/budget.js";
-import Expense from '../models/expense.js';
+import Expense from "../models/expense.js";
 
-
-
+// ✅ Set or update budget
 export const setBudget = async (req, res) => {
-  const { category, amount } = req.body;
+  let { category, amount } = req.body;
 
   if (!category || !amount) {
     return res.status(400).json({ message: "Category and amount are required." });
   }
+
+  // Normalize category (lowercase, trimmed)
+  const categoryNormalized = category.trim().toLowerCase();
 
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
   try {
-    // Check if budget already exists for this user + category + month
-    const existing = await Budget.findOne({ user: req.user.id, category, month, year });
+    const existing = await Budget.findOne({
+      user: req.user.id,
+      category: categoryNormalized,
+      month,
+      year,
+    });
 
     if (existing) {
       existing.amount = amount;
@@ -24,13 +30,12 @@ export const setBudget = async (req, res) => {
       return res.json({ message: "Budget updated successfully", budget: existing });
     }
 
-    // Otherwise create new budget
     const budget = await Budget.create({
       user: req.user.id,
-      category,
+      category: categoryNormalized,
       amount,
       month,
-      year
+      year,
     });
 
     res.status(201).json({ message: "Budget created", budget });
@@ -39,6 +44,7 @@ export const setBudget = async (req, res) => {
   }
 };
 
+// ✅ Get all budgets (history view)
 export const getBudgets = async (req, res) => {
   try {
     const budgets = await Budget.find({ user: req.user.id }).sort({ year: -1, month: -1 });
@@ -48,50 +54,45 @@ export const getBudgets = async (req, res) => {
   }
 };
 
-
-
-
-
+// ✅ Get current month's budget status
 export const getBudgetStatus = async (req, res) => {
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
   try {
-    // 1. Get all budgets for current user, month, year
     const budgets = await Budget.find({
       user: req.user.id,
       month: currentMonth,
-      year: currentYear
+      year: currentYear,
     });
 
-    // 2. Get all expenses for current month
     const expenses = await Expense.find({
       user: req.user.id,
       date: {
-        $gte: new Date(`${currentYear}-${currentMonth}-01`),
-        $lte: new Date(`${currentYear}-${currentMonth + 1}-01`)
-      }
+        $gte: new Date(`${currentYear}-${String(currentMonth).padStart(2, '0')}-01`),
+        $lt: new Date(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`)
+      },
     });
 
-    // 3. Group total spent by category
+    // 🔧 Group expenses by lowercase category
     const spentByCategory = {};
     for (const expense of expenses) {
-      const category = expense.category;
-      if (!spentByCategory[category]) {
-        spentByCategory[category] = 0;
-      }
-      spentByCategory[category] += expense.amount;
+      const category = expense.category.trim().toLowerCase();
+      spentByCategory[category] = (spentByCategory[category] || 0) + expense.amount;
     }
 
-    // 4. Compare with budgets and return status
-    const statusReport = budgets.map(budget => {
-      const spent = spentByCategory[budget.category] || 0;
-      const percentage = (spent / budget.amount) * 100;
+    const statusReport = budgets.map((budget) => {
+      const categoryKey = budget.category.trim().toLowerCase(); // normalize for matching
+      const spent = spentByCategory[categoryKey] || 0;
+      const remaining = Math.max(budget.amount - spent, 0);
+      const percentage = spent === 0 ? 0 : (spent / budget.amount) * 100;
 
-      let status = "Within budget";
+      let status = "✅ Within budget";
       if (percentage >= 100) {
         status = "❌ Over budget";
+      } else if (percentage >= 90) {
+        status = "⚠️ 90% of budget used";
       } else if (percentage >= 80) {
         status = "⚠️ 80% of budget used";
       }
@@ -100,8 +101,9 @@ export const getBudgetStatus = async (req, res) => {
         category: budget.category,
         budget: budget.amount,
         spent,
-        percentage: percentage.toFixed(2),
-        status
+        remaining,
+        percentage: Number(percentage.toFixed(2)),
+        status,
       };
     });
 

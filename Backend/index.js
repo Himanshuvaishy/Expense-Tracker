@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/database.js";
 import authRoutes from "./routes/authRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
-
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import expenseRoutes from "./routes/expenseRoutes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -25,6 +25,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/budget", budgetRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("API running");

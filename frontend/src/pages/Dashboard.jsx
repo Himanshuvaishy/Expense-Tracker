@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import SmartSuggestionBox from "../components/SmartSuggestionBox"; // ✅
 
 ChartJS.register(
   CategoryScale,
@@ -107,7 +108,6 @@ const Dashboard = () => {
     <div className="max-w-6xl mx-auto p-6">
       {/* Top Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        {/* Welcome + Profile */}
         <div>
           <h1 className="text-3xl font-bold">
             Welcome,{" "}
@@ -224,12 +224,22 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white p-4 shadow rounded">
+            <div className="bg-white p-4 shadow rounded mb-6">
               <h2 className="text-lg font-semibold mb-2">
                 Spending Over Time
               </h2>
               <Line data={lineChartData} />
             </div>
+
+            {/* ✅ Smart Suggestion Box */}
+            {data?.topCategory && data?.totalSpent > 0 && (
+              <div className="bg-white p-4 shadow rounded mb-10">
+                <SmartSuggestionBox
+                  category={data.topCategory}
+                  amount={data.totalSpent}
+                />
+              </div>
+            )}
           </>
         )
       ) : (

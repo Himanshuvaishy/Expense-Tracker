@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import pythonAPI from "../axios/pythonAPI"; // ✅ Use Flask backend
 
 const ReportHistory = ({ userId }) => {
   const [reports, setReports] = useState([]);
@@ -7,7 +7,7 @@ const ReportHistory = ({ userId }) => {
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/reports/${userId}`);
+        const res = await pythonAPI.get(`/reports/${userId}`);
         setReports(res.data);
       } catch (err) {
         console.error("Failed to fetch reports:", err);

@@ -6,7 +6,7 @@ from utils.update_or_create_monthly_report import update_or_create_monthly_repor
 app = Flask(__name__)
 CORS(app)
 
-# Dummy suggestion logic
+# 🔍 Dummy suggestion logic
 suggestion_map = {
     "food": ["🍕 Try cooking at home", "🛒 Use coupons for groceries"],
     "travel": ["🚇 Try public transport", "🛏️ Book in advance"],
@@ -18,6 +18,7 @@ suggestion_map = {
 @app.route("/")
 def home():
     return "Smart Suggestion API is running."
+
 
 # ✅ Suggestion route
 @app.route("/api/suggest", methods=["POST"])
@@ -41,7 +42,8 @@ def suggest():
         "suggestions": suggestions
     })
 
-# ✅ Save Monthly Report (manual method — legacy)
+
+# ✅ Save Monthly Report (manual method)
 @app.route("/api/save-report", methods=["POST"])
 def save_report():
     data = request.json
@@ -84,6 +86,7 @@ def save_report():
     finally:
         session.close()
 
+
 # ✅ Get last 3 monthly reports
 @app.route("/api/reports/<user_id>", methods=["GET"])
 def get_reports(user_id):
@@ -113,7 +116,8 @@ def get_reports(user_id):
     finally:
         session.close()
 
-# ✅ NEW: Automatically update monthly report from utility logic
+
+# ✅ NEW: Automatically update monthly report
 @app.route("/api/reports/update/<user_id>", methods=["POST"])
 def update_report(user_id):
     try:
@@ -121,6 +125,58 @@ def update_report(user_id):
         return jsonify({"message": "✅ Monthly report updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ✅ NEW: Dashboard Summary Endpoint
+@app.route("/api/dashboard/summary", methods=["GET"])
+def dashboard_summary():
+    month = request.args.get("month")
+    year = request.args.get("year")
+    user_id = request.args.get("user_id")
+
+    if not month or not year or not user_id:
+        return jsonify({"error": "Month, year, and user_id are required"}), 400
+
+    session = Session()
+    try:
+        expenses = session.execute(
+            """
+            SELECT category, payment_method, date, amount 
+            FROM expense 
+            WHERE user_id = :user_id 
+            AND EXTRACT(MONTH FROM date) = :month 
+            AND EXTRACT(YEAR FROM date) = :year
+            """,
+            {"user_id": user_id, "month": month, "year": year}
+        ).fetchall()
+
+        total_spent = sum([e.amount for e in expenses])
+        spending_by_category = {}
+        payment_methods = {}
+        spending_over_time = {}
+
+        for e in expenses:
+            spending_by_category[e.category] = spending_by_category.get(e.category, 0) + e.amount
+            payment_methods[e.payment_method] = payment_methods.get(e.payment_method, 0) + e.amount
+            date_str = e.date.strftime("%Y-%m-%d")
+            spending_over_time[date_str] = spending_over_time.get(date_str, 0) + e.amount
+
+        top_category = max(spending_by_category.items(), key=lambda x: x[1])[0] if spending_by_category else ""
+
+        return jsonify({
+            "totalSpent": total_spent,
+            "topCategory": top_category,
+            "topPaymentMethods": [{"method": k, "amount": v} for k, v in payment_methods.items()],
+            "spendingByCategory": [{"category": k, "amount": v} for k, v in spending_by_category.items()],
+            "spendingOverTime": [{"date": k, "amount": v} for k, v in sorted(spending_over_time.items())],
+            "overbudgetCategories": []  # Optional extension
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

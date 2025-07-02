@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "../axios"; // ✅ use custom axios instance
+import nodeAPI from "../axios/nodeAPI"; // ✅ use Node backend for login
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
 
@@ -16,19 +16,17 @@ const LoginPage = () => {
     setErrMsg("");
 
     try {
-      // ✅ Clear previous data before login
       localStorage.clear();
       sessionStorage.clear();
 
-      const res = await axios.post(
-        "/auth/login",
-        { email, password }
-      );
+      const res = await nodeAPI.post("/auth/login", {
+        email,
+        password,
+      });
 
-      // ✅ Set the current user in context
       setUser(res.data.user);
 
-      // ✅ Optional: clear report-related local storage keys
+      // Clean any old report flags
       Object.keys(localStorage)
         .filter((key) => key.startsWith("report_saved_"))
         .forEach((key) => localStorage.removeItem(key));

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../axios"; // ✅ Use your custom axios instance
+import nodeAPI from "../axios/nodeAPI"; // ✅ Use Node backend
 import { useAuth } from "../context/AutoContext";
 
 const ExpensesPage = () => {
@@ -41,7 +41,7 @@ const ExpensesPage = () => {
 
       queryParams.append("userId", user.id);
 
-      const res = await axios.get(`/expenses/getExpenses?${queryParams.toString()}`);
+      const res = await nodeAPI.get(`/expenses/getExpenses?${queryParams.toString()}`);
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
@@ -79,10 +79,8 @@ const ExpensesPage = () => {
     };
 
     try {
-      await axios.post(`/expenses/createExpense`, normalizedForm);
-
-      // ✅ Update monthly report
-      await axios.post(`/reports/update/${user.id}`);
+      await nodeAPI.post(`/expenses/createExpense`, normalizedForm);
+      await nodeAPI.post(`/reports/update/${user.id}`);
 
       setForm({
         amount: "",
@@ -100,11 +98,8 @@ const ExpensesPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/expenses/deleteExpense/${id}`);
-
-      // ✅ Update monthly report
-      await axios.post(`/reports/update/${user.id}`);
-
+      await nodeAPI.delete(`/expenses/deleteExpense/${id}`);
+      await nodeAPI.post(`/reports/update/${user.id}`);
       fetchExpenses();
     } catch (err) {
       console.error("Error deleting expense:", err);
@@ -133,11 +128,8 @@ const ExpensesPage = () => {
     };
 
     try {
-      await axios.put(`/expenses/updateExpense/${editingId}`, normalizedEditForm);
-
-      // ✅ Update monthly report
-      await axios.post(`/reports/update/${user.id}`);
-
+      await nodeAPI.put(`/expenses/updateExpense/${editingId}`, normalizedEditForm);
+      await nodeAPI.post(`/reports/update/${user.id}`);
       setEditingId(null);
       fetchExpenses();
     } catch (err) {
@@ -220,16 +212,12 @@ const ExpensesPage = () => {
             type="text"
             placeholder="Category"
             value={filters.category}
-            onChange={(e) =>
-              setFilters({ ...filters, category: e.target.value })
-            }
+            onChange={(e) => setFilters({ ...filters, category: e.target.value })}
             className="border p-2 rounded"
           />
           <select
             value={filters.paymentMethod}
-            onChange={(e) =>
-              setFilters({ ...filters, paymentMethod: e.target.value })
-            }
+            onChange={(e) => setFilters({ ...filters, paymentMethod: e.target.value })}
             className="border p-2 rounded"
           >
             <option value="">All Payment Methods</option>
@@ -242,9 +230,7 @@ const ExpensesPage = () => {
             <input
               type="date"
               value={filters.fromDate}
-              onChange={(e) =>
-                setFilters({ ...filters, fromDate: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
               className="border p-2 rounded"
             />
           </div>
@@ -253,9 +239,7 @@ const ExpensesPage = () => {
             <input
               type="date"
               value={filters.toDate}
-              onChange={(e) =>
-                setFilters({ ...filters, toDate: e.target.value })
-              }
+              onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
               className="border p-2 rounded"
             />
           </div>
@@ -263,9 +247,7 @@ const ExpensesPage = () => {
             type="text"
             placeholder="Search notes..."
             value={filters.search}
-            onChange={(e) =>
-              setFilters({ ...filters, search: e.target.value })
-            }
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             className="border p-2 rounded col-span-2"
           />
         </div>

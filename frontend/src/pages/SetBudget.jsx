@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "../axios"; // ✅ custom axios instance
+import nodeAPI from "../axios/nodeAPI"; // ✅ custom axios instance
 
 const SetBudgetPage = () => {
   const [category, setCategory] = useState("");
@@ -13,7 +13,7 @@ const SetBudgetPage = () => {
     const normalizedCategory = category.trim().toLowerCase();
 
     try {
-      await axios.post(
+      await nodeAPI.post(
         "/budget/setbudget",
         { category: normalizedCategory, amount }
       );

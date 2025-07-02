@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
-import { Lightbulb } from "lucide-react"; // Optional icon
+import pythonAPI from "../axios/pythonAPI"; // ✅ Use Flask backend
+import { Lightbulb } from "lucide-react";
 
 const SmartSuggestionBox = () => {
   const [category, setCategory] = useState("");
@@ -13,7 +13,7 @@ const SmartSuggestionBox = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://127.0.0.1:5000/api/suggest", {
+      const res = await pythonAPI.post("/suggest", {
         category,
         amount,
       });

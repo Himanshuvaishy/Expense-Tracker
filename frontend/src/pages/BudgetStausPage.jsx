@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "../axios"; // ✅ Use global axios config
+import nodeAPI from "../axios/nodeAPI"; // ✅ Use Node.js backend
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
 
@@ -18,7 +18,7 @@ const BudgetStatusPage = () => {
     if (!user?.id) return;
 
     try {
-      const res = await axios.get("/budget/status");
+      const res = await nodeAPI.get("/budget/status");
       setStatus(res.data);
     } catch (err) {
       console.error("Failed to load budget status:", err);
@@ -45,7 +45,7 @@ const BudgetStatusPage = () => {
 
   const handleSave = async (category) => {
     try {
-      await axios.post("/budget/setbudget", {
+      await nodeAPI.post("/budget/setbudget", {
         category,
         amount: Number(editAmount),
       });

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import axios from "../axios"; // ✅ use custom axios instance
+
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
+import nodeAPI from "../axios/nodeAPI";
 
 const RegisterPage = () => {
   const { setUser } = useAuth();
@@ -26,7 +27,7 @@ const RegisterPage = () => {
       sessionStorage.clear();
 
       // ✅ Step 2: Register new user
-      const res = await axios.post("/auth/register", {
+      const res = await nodeAPI.post("/auth/register", {
         name,
         email,
         password,

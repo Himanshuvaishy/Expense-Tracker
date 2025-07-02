@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
+import axios from "../axios"; // ✅ custom axios instance
 
 const SetBudgetPage = () => {
   const [category, setCategory] = useState("");
@@ -14,12 +14,11 @@ const SetBudgetPage = () => {
 
     try {
       await axios.post(
-        "http://localhost:7777/api/budget/setbudget",
-        { category: normalizedCategory, amount },
-        { withCredentials: true }
+        "/budget/setbudget",
+        { category: normalizedCategory, amount }
       );
       alert("✅ Budget set successfully!");
-      navigate("/budget-status"); // ✅ no full reload
+      navigate("/budget-status");
     } catch (err) {
       alert(
         "Failed to set budget: " + (err.response?.data?.message || err.message)

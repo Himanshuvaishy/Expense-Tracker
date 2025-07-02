@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "../axios"; // ✅ use custom axios instance
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
 
@@ -21,9 +21,8 @@ const LoginPage = () => {
       sessionStorage.clear();
 
       const res = await axios.post(
-        "http://localhost:7777/api/auth/login",
-        { email, password },
-        { withCredentials: true }
+        "/auth/login",
+        { email, password }
       );
 
       // ✅ Set the current user in context

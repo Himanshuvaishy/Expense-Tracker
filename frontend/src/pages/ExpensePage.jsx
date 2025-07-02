@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useAuth } from "../context/AutoContext"; // ✅ Access logged-in user
+import axios from "../axios"; // ✅ Use your custom axios instance
+import { useAuth } from "../context/AutoContext";
 
 const ExpensesPage = () => {
   const { user } = useAuth();
@@ -41,10 +41,7 @@ const ExpensesPage = () => {
 
       queryParams.append("userId", user.id);
 
-      const res = await axios.get(
-        `http://localhost:7777/api/expenses/getExpenses?${queryParams.toString()}`,
-        { withCredentials: true }
-      );
+      const res = await axios.get(`/expenses/getExpenses?${queryParams.toString()}`);
       setExpenses(res.data);
     } catch (err) {
       console.error("Error fetching expenses:", err);
@@ -82,14 +79,10 @@ const ExpensesPage = () => {
     };
 
     try {
-      await axios.post(
-        "http://localhost:7777/api/expenses/createExpense",
-        normalizedForm,
-        { withCredentials: true }
-      );
+      await axios.post(`/expenses/createExpense`, normalizedForm);
 
       // ✅ Update monthly report
-      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
+      await axios.post(`/reports/update/${user.id}`);
 
       setForm({
         amount: "",
@@ -107,13 +100,10 @@ const ExpensesPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(
-        `http://localhost:7777/api/expenses/deleteExpense/${id}`,
-        { withCredentials: true }
-      );
+      await axios.delete(`/expenses/deleteExpense/${id}`);
 
       // ✅ Update monthly report
-      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
+      await axios.post(`/reports/update/${user.id}`);
 
       fetchExpenses();
     } catch (err) {
@@ -143,14 +133,10 @@ const ExpensesPage = () => {
     };
 
     try {
-      await axios.put(
-        `http://localhost:7777/api/expenses/updateExpense/${editingId}`,
-        normalizedEditForm,
-        { withCredentials: true }
-      );
+      await axios.put(`/expenses/updateExpense/${editingId}`, normalizedEditForm);
 
       // ✅ Update monthly report
-      await axios.post(`http://localhost:5000/api/reports/update/${user.id}`);
+      await axios.post(`/reports/update/${user.id}`);
 
       setEditingId(null);
       fetchExpenses();

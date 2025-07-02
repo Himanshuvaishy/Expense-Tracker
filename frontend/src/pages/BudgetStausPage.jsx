@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../axios"; // ✅ Use global axios config
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AutoContext"; // ✅ Import user context
+import { useAuth } from "../context/AutoContext";
 
 const BudgetStatusPage = () => {
   const [status, setStatus] = useState([]);
@@ -11,16 +11,14 @@ const BudgetStatusPage = () => {
   const [updatedCategory, setUpdatedCategory] = useState(null);
   const [toastMessage, setToastMessage] = useState("");
 
-  const { user } = useAuth(); // ✅ Get logged-in user
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const fetchStatus = async () => {
-    if (!user?.id) return; // ✅ Avoid fetching if user is undefined
+    if (!user?.id) return;
 
     try {
-      const res = await axios.get("http://localhost:7777/api/budget/status", {
-        withCredentials: true,
-      });
+      const res = await axios.get("/budget/status");
       setStatus(res.data);
     } catch (err) {
       console.error("Failed to load budget status:", err);
@@ -29,11 +27,11 @@ const BudgetStatusPage = () => {
     }
   };
 
- useEffect(() => {
-  if (user?.id) {
-    fetchStatus();
-  }
-}, [user?.id]); // ✅ Re-fetch whenever user changes
+  useEffect(() => {
+    if (user?.id) {
+      fetchStatus();
+    }
+  }, [user?.id]);
 
   const handleEdit = (category, currentAmount) => {
     setEditingCategory(category);
@@ -47,11 +45,10 @@ const BudgetStatusPage = () => {
 
   const handleSave = async (category) => {
     try {
-      await axios.post(
-        "http://localhost:7777/api/budget/setbudget",
-        { category, amount: Number(editAmount) },
-        { withCredentials: true }
-      );
+      await axios.post("/budget/setbudget", {
+        category,
+        amount: Number(editAmount),
+      });
 
       setEditingCategory(null);
       setUpdatedCategory(category);
@@ -81,9 +78,7 @@ const BudgetStatusPage = () => {
         <p>Loading...</p>
       ) : status.length === 0 ? (
         <div className="text-center mt-8">
-          <p className="text-gray-600 text-lg">
-            No budget found for this month.
-          </p>
+          <p className="text-gray-600 text-lg">No budget found for this month.</p>
           <button
             onClick={() => navigate("/setbudget")}
             className="mt-4 bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
@@ -113,7 +108,6 @@ const BudgetStatusPage = () => {
                   }`}
                 >
                   <td className="p-3 font-medium">{item.category}</td>
-
                   <td className="p-3">
                     {editingCategory === item.category ? (
                       <input
@@ -126,11 +120,9 @@ const BudgetStatusPage = () => {
                       `₹${item.budget}`
                     )}
                   </td>
-
                   <td className="p-3">₹{item.spent}</td>
                   <td className="p-3">{item.percentage}%</td>
                   <td className="p-3">{item.status}</td>
-
                   <td className="p-3 space-x-2">
                     {editingCategory === item.category ? (
                       <>

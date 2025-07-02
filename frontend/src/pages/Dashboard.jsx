@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import axios from "axios";
-import { isReportSaved,markReportSaved } from "../utilis/reportStorage";
+import axios from "../axios"; // ✅ Use custom axios
+import { isReportSaved, markReportSaved } from "../utilis/reportStorage";
 import { useAuth } from "../context/AutoContext";
 import { useNavigate } from "react-router-dom";
 import { Pie, Bar, Line } from "react-chartjs-2";
@@ -41,9 +41,8 @@ const Dashboard = () => {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
   const [data, setData] = useState(null);
-  const reportSavedRef = useRef(false); // 🔄 used to prevent double toast
+  const reportSavedRef = useRef(false);
 
-  // ✅ Define before using it in JSX
   const resetToCurrentMonth = () => {
     setMonth(today.getMonth() + 1);
     setYear(today.getFullYear());
@@ -52,8 +51,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:7777/api/dashboard/summary?month=${month}&year=${year}`,
-        { withCredentials: true }
+        `/dashboard/summary?month=${month}&year=${year}`
       );
       setData(res.data);
       reportSavedRef.current = false;
@@ -66,53 +64,52 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [month, year]);
 
-useEffect(() => {
-  if (data?.totalSpent > 0 && data?.topCategory && user?.id) {
-    const key = `report_saved_${user.id}_${month}_${year}`;
-    const existing = JSON.parse(localStorage.getItem(key));
+  useEffect(() => {
+    if (data?.totalSpent > 0 && data?.topCategory && user?.id) {
+      const key = `report_saved_${user.id}_${month}_${year}`;
+      const existing = JSON.parse(localStorage.getItem(key));
 
-    const needsUpdate =
-      !existing ||
-      existing.totalSpent !== data.totalSpent ||
-      existing.topCategory !== data.topCategory;
+      const needsUpdate =
+        !existing ||
+        existing.totalSpent !== data.totalSpent ||
+        existing.topCategory !== data.topCategory;
 
-    if (needsUpdate) {
-      const saveReport = async () => {
-        try {
-          await axios.post("http://localhost:5000/api/save-report", {
-            user_id: user.id,
-            month: getMonthName(month),
-            year,
-            total_spent: data.totalSpent,
-            top_category: data.topCategory,
-            overbudget_categories: data.overbudgetCategories || [],
-          });
+      if (needsUpdate) {
+        const saveReport = async () => {
+          try {
+            await axios.post("/save-report", {
+              user_id: user.id,
+              month: getMonthName(month),
+              year,
+              total_spent: data.totalSpent,
+              top_category: data.topCategory,
+              overbudget_categories: data.overbudgetCategories || [],
+            });
 
-          toast.success("📊 Monthly report saved!", {
-            toastId: "monthly-report-toast",
-          });
+            toast.success("📊 Monthly report saved!", {
+              toastId: "monthly-report-toast",
+            });
 
-          // ✅ Save summary in localStorage for change tracking
-          localStorage.setItem(
-            key,
-            JSON.stringify({
-              totalSpent: data.totalSpent,
-              topCategory: data.topCategory,
-              savedAt: new Date().toISOString(),
-            })
-          );
-        } catch (err) {
-          toast.error("❌ Failed to save monthly report", {
-            toastId: "monthly-report-error",
-          });
-          console.error("❌ Error saving report:", err);
-        }
-      };
+            localStorage.setItem(
+              key,
+              JSON.stringify({
+                totalSpent: data.totalSpent,
+                topCategory: data.topCategory,
+                savedAt: new Date().toISOString(),
+              })
+            );
+          } catch (err) {
+            toast.error("❌ Failed to save monthly report", {
+              toastId: "monthly-report-error",
+            });
+            console.error("❌ Error saving report:", err);
+          }
+        };
 
-      saveReport();
+        saveReport();
+      }
     }
-  }
-}, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
+  }, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
 
   const handleLogout = () => {
     setUser(null);
@@ -284,7 +281,6 @@ useEffect(() => {
               <Line data={lineChartData} />
             </div>
 
-            {/* Suggestion Box */}
             <div className="bg-white p-4 shadow rounded mb-10">
               <SmartSuggestionBox
                 category={data.topCategory}
@@ -292,7 +288,6 @@ useEffect(() => {
               />
             </div>
 
-            {/* Report History */}
             <ReportHistory userId={user.id} />
           </>
         )

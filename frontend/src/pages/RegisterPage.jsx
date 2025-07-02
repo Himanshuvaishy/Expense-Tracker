@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "../axios"; // ✅ use custom axios instance
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
 
@@ -26,25 +26,25 @@ const RegisterPage = () => {
       sessionStorage.clear();
 
       // ✅ Step 2: Register new user
-      const res = await axios.post(
-        "http://localhost:7777/api/auth/register",
-        { name, email, password },
-        { withCredentials: true }
-      );
+      const res = await axios.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
 
       // ✅ Step 3: Save user globally
       setUser(res.data.user || { name, email });
 
-      // ✅ Step 4: Optional — Clear report cache (in case of refresh or repeated usage)
+      // ✅ Step 4: Clear report cache
       Object.keys(localStorage)
         .filter((key) => key.startsWith("report_saved_"))
         .forEach((key) => localStorage.removeItem(key));
 
       setSuccessMsg("✅ Registration successful!");
 
-      // ✅ Step 5: Redirect after short delay
+      // ✅ Step 5: Redirect
       setTimeout(() => {
-        navigate("/"); // will go to dashboard
+        navigate("/");
       }, 1000);
     } catch (err) {
       setErrMsg(err.response?.data?.message || "Registration failed");

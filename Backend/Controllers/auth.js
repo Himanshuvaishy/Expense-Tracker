@@ -1,9 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
+// ✅ No early assignment of JWT_SECRET
 
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -25,8 +27,8 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
- 
-    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
+    // ✅ Use env directly here
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
@@ -51,7 +53,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -64,7 +65,8 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+    // ✅ Use env directly here too
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 

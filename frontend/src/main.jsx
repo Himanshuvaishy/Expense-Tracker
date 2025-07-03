@@ -10,8 +10,11 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <App />
-      <ToastContainer position="top-center" />
+      <ToastContainer 
+        position="top-center" 
+        autoClose={3000} 
+        theme="colored"   // ✅ Enables green/red/orange/blue toast backgrounds
+      />
     </AuthProvider>
   </StrictMode>
 );
-

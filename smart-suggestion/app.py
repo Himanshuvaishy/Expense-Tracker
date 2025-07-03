@@ -22,7 +22,7 @@ CORS(app,
      ],
      allow_headers=["Content-Type", "Authorization"])
 
-# 🔍 Dummy suggestion logic
+# 🔍 Suggestion logic
 suggestion_map = {
     "food": ["🍕 Try cooking at home", "🛒 Use coupons for groceries"],
     "travel": ["🚇 Try public transport", "🛏️ Book in advance"],
@@ -34,14 +34,13 @@ suggestion_map = {
 
 @app.route("/")
 def home():
-    return "Smart Suggestion API is running."
+    return "Smart Suggestion API is running ✅"
 
 
 @app.route("/api/suggest", methods=["POST"])
 def suggest():
     data = request.json
     category = data.get("category", "").strip().lower()
-
     try:
         amount = float(data.get("amount", 0))
     except (ValueError, TypeError):
@@ -93,6 +92,7 @@ def save_report():
         return jsonify({"message": "✅ Monthly report saved successfully"}), 201
     except Exception as e:
         session.rollback()
+        print("❌ Error saving report:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
@@ -102,9 +102,10 @@ def save_report():
 def get_reports(user_id):
     session = Session()
     try:
+        print("📥 Fetching reports for user_id:", user_id)
         reports = (
             session.query(MonthlyReport)
-            .filter(MonthlyReport.user_id == user_id)
+            .filter(MonthlyReport.user_id == user_id.strip())
             .order_by(MonthlyReport.year.desc(), MonthlyReport.month.desc())
             .limit(3)
             .all()
@@ -122,6 +123,7 @@ def get_reports(user_id):
         ]
         return jsonify(result)
     except Exception as e:
+        print("❌ Error in /api/reports:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
@@ -150,10 +152,10 @@ def dashboard_summary():
                 AND strftime('%m', date) = :month 
                 AND strftime('%Y', date) = :year
             """),
-            {"user_id": user_id, "month": formatted_month, "year": str(year)}
+            {"user_id": user_id.strip(), "month": formatted_month, "year": str(year)}
         ).fetchall()
 
-        print(f"📊 {len(expenses)} expenses fetched.")
+        print(f"📊 {len(expenses)} expenses fetched for user {user_id}.")
 
         total_spent = sum([e.amount for e in expenses])
         spending_by_category = {}
@@ -183,5 +185,7 @@ def dashboard_summary():
         session.close()
 
 
+# ✅ Run app if main
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 5000))  # support for Render, uses $PORT
+    app.run(debug=True, host="0.0.0.0", port=port)

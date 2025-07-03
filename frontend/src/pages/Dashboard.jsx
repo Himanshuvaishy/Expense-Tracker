@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AutoContext";
+import nodeAPI from "../axios/nodeAPI";
 import { useNavigate } from "react-router-dom";
 import { Pie, Bar, Line } from "react-chartjs-2";
 import {
@@ -47,8 +48,8 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:7777/api/dashboard/summary?month=${month}&year=${year}&user_id=${user.id}`,
+      const res = await nodeAPI.get(
+        `/dashboard/summary?month=${month}&year=${year}&user_id=${user.id}`,
         { withCredentials: true }
       );
       setData(res.data);

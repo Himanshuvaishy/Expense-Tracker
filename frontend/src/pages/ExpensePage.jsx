@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import nodeAPI from "../axios/nodeAPI"; // ✅ Use Node backend
+import nodeAPI from "../axios/nodeAPI"; // Node backend for expenses
+import pythonAPI from "../axios/pythonAPI"; // ✅ Flask backend for reports
 import { useAuth } from "../context/AutoContext";
 
 const ExpensesPage = () => {
@@ -80,7 +81,7 @@ const ExpensesPage = () => {
 
     try {
       await nodeAPI.post(`/expenses/createExpense`, normalizedForm);
-      await nodeAPI.post(`/reports/update/${user.id}`);
+      await pythonAPI.post(`/reports/update/${user.id}`); // ✅ fixed
 
       setForm({
         amount: "",
@@ -99,7 +100,7 @@ const ExpensesPage = () => {
   const handleDelete = async (id) => {
     try {
       await nodeAPI.delete(`/expenses/deleteExpense/${id}`);
-      await nodeAPI.post(`/reports/update/${user.id}`);
+      await pythonAPI.post(`/reports/update/${user.id}`); // ✅ fixed
       fetchExpenses();
     } catch (err) {
       console.error("Error deleting expense:", err);
@@ -129,7 +130,7 @@ const ExpensesPage = () => {
 
     try {
       await nodeAPI.put(`/expenses/updateExpense/${editingId}`, normalizedEditForm);
-      await nodeAPI.post(`/reports/update/${user.id}`);
+      await pythonAPI.post(`/reports/update/${user.id}`); // ✅ fixed
       setEditingId(null);
       fetchExpenses();
     } catch (err) {
@@ -205,6 +206,7 @@ const ExpensesPage = () => {
         </button>
       </form>
 
+      {/* Filters */}
       <div className="mb-6 bg-white p-4 rounded shadow">
         <h2 className="text-lg font-semibold mb-2">Filter Expenses</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

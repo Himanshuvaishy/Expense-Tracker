@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from sqlalchemy import text
 from models import MonthlyReport, Session
 from utils.update_or_create_monthly_report import update_or_create_monthly_report
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, origins=[
+    "http://localhost:5173",
+    "https://your-live-frontend-url.com"
+])
 
 # 🔍 Dummy suggestion logic
 suggestion_map = {
@@ -20,7 +24,6 @@ def home():
     return "Smart Suggestion API is running."
 
 
-# ✅ Suggestion route
 @app.route("/api/suggest", methods=["POST"])
 def suggest():
     data = request.json
@@ -35,7 +38,6 @@ def suggest():
         return jsonify({"error": "Category and valid amount required"}), 400
 
     suggestions = suggestion_map.get(category, suggestion_map["others"])
-
     return jsonify({
         "category": category,
         "amount": amount,
@@ -43,11 +45,9 @@ def suggest():
     })
 
 
-# ✅ Save Monthly Report (manual method)
 @app.route("/api/save-report", methods=["POST"])
 def save_report():
     data = request.json
-
     user_id = data.get("user_id")
     month = data.get("month")
     year = data.get("year")
@@ -61,9 +61,7 @@ def save_report():
     session = Session()
     try:
         existing = session.query(MonthlyReport).filter_by(
-            user_id=user_id,
-            month=month,
-            year=year
+            user_id=user_id, month=month, year=year
         ).first()
 
         if existing:
@@ -87,7 +85,6 @@ def save_report():
         session.close()
 
 
-# ✅ Get last 3 monthly reports
 @app.route("/api/reports/<user_id>", methods=["GET"])
 def get_reports(user_id):
     session = Session()
@@ -117,7 +114,6 @@ def get_reports(user_id):
         session.close()
 
 
-# ✅ NEW: Automatically update monthly report
 @app.route("/api/reports/update/<user_id>", methods=["POST"])
 def update_report(user_id):
     try:
@@ -127,7 +123,6 @@ def update_report(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ DEBUG-ENABLED Dashboard Summary Route
 @app.route("/api/dashboard/summary", methods=["GET"])
 def dashboard_summary():
     month = request.args.get("month")
@@ -141,15 +136,17 @@ def dashboard_summary():
 
     session = Session()
     try:
+        formatted_month = str(month).zfill(2)
+
         expenses = session.execute(
-            """
-            SELECT category, payment_method, date, amount 
-            FROM expense 
-            WHERE user_id = :user_id 
-            AND EXTRACT(MONTH FROM date) = :month 
-            AND EXTRACT(YEAR FROM date) = :year
-            """,
-            {"user_id": user_id, "month": month, "year": year}
+            text("""
+                SELECT category, payment_method, date, amount 
+                FROM expense 
+                WHERE user_id = :user_id 
+                AND strftime('%m', date) = :month 
+                AND strftime('%Y', date) = :year
+            """),
+            {"user_id": user_id, "month": formatted_month, "year": str(year)}
         ).fetchall()
 
         print(f"📊 {len(expenses)} expenses fetched.")
@@ -160,7 +157,6 @@ def dashboard_summary():
         spending_over_time = {}
 
         for e in expenses:
-            print("🧾 Expense row:", e)
             spending_by_category[e.category] = spending_by_category.get(e.category, 0) + e.amount
             payment_methods[e.payment_method] = payment_methods.get(e.payment_method, 0) + e.amount
             date_str = e.date.strftime("%Y-%m-%d")
@@ -176,7 +172,6 @@ def dashboard_summary():
             "spendingOverTime": [{"date": k, "amount": v} for k, v in sorted(spending_over_time.items())],
             "overbudgetCategories": []
         })
-
     except Exception as e:
         print("❌ Error in dashboard summary:", e)
         return jsonify({"error": str(e)}), 500

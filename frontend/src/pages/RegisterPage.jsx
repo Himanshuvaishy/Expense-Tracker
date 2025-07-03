@@ -1,11 +1,8 @@
 import { useState } from "react";
-
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AutoContext";
 import nodeAPI from "../axios/nodeAPI";
 
 const RegisterPage = () => {
-  const { setUser } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -22,33 +19,25 @@ const RegisterPage = () => {
     setSuccessMsg("");
 
     try {
-      // ✅ Step 1: Clear any stale local/session data
+      // ✅ Clear any old session/cached report data
       localStorage.clear();
       sessionStorage.clear();
 
-      // ✅ Step 2: Register new user
+      // ✅ Register user via backend
       const res = await nodeAPI.post("/auth/register", {
         name,
         email,
         password,
       });
 
-      // ✅ Step 3: Save user globally
-      setUser(res.data.user || { name, email });
+      // ✅ Set success message and go to login page
+      setSuccessMsg("✅ Registration successful! Redirecting to login...");
 
-      // ✅ Step 4: Clear report cache
-      Object.keys(localStorage)
-        .filter((key) => key.startsWith("report_saved_"))
-        .forEach((key) => localStorage.removeItem(key));
-
-      setSuccessMsg("✅ Registration successful!");
-
-      // ✅ Step 5: Redirect
       setTimeout(() => {
-        navigate("/");
-      }, 1000);
+        navigate("/login"); // ✅ Go to login page instead of auto-login
+      }, 1500);
     } catch (err) {
-      setErrMsg(err.response?.data?.message || "Registration failed");
+      setErrMsg(err.response?.data?.message || "❌ Registration failed");
     } finally {
       setLoading(false);
     }
@@ -84,6 +73,7 @@ const RegisterPage = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+
         <input
           type="password"
           className="w-full p-2 border rounded"
@@ -92,6 +82,7 @@ const RegisterPage = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
         <button
           type="submit"
           disabled={loading}

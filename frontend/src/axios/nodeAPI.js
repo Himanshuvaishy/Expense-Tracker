@@ -1,7 +1,8 @@
+// src/axios/nodeAPI.js
 import axios from "axios";
 
 const nodeAPI = axios.create({
-  baseURL: "https://expense-tracker-1yf7.onrender.com/api", // ✅ Your Node.js backend
+  baseURL: import.meta.env.VITE_NODE_API_URL, // ✅ Use env variable instead of hardcoded URL
   withCredentials: true,
 });
 

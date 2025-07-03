@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
-import pythonAPI from "../axios/pythonAPI"; // ✅ Use Flask backend
-import { isReportSaved, markReportSaved } from "../utilis/reportStorage";
+import axios from "axios";
+import { isReportSaved,markReportSaved } from "../utilis/reportStorage";
 import { useAuth } from "../context/AutoContext";
 import { useNavigate } from "react-router-dom";
 import { Pie, Bar, Line } from "react-chartjs-2";
@@ -16,7 +16,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
+import SmartSuggestionBox from "../components/SmartSuggestionBox";
+import ReportHistory from "../components/ReportHistory";
 
 ChartJS.register(
   CategoryScale,
@@ -40,8 +41,9 @@ const Dashboard = () => {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
   const [data, setData] = useState(null);
-  const reportSavedRef = useRef(false);
+  const reportSavedRef = useRef(false); // 🔄 used to prevent double toast
 
+  // ✅ Define before using it in JSX
   const resetToCurrentMonth = () => {
     setMonth(today.getMonth() + 1);
     setYear(today.getFullYear());
@@ -49,7 +51,10 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const res = await pythonAPI.get(`/dashboard/summary?month=${month}&year=${year}&user_id=${user.id}`)
+      const res = await axios.get(
+        `http://localhost:7777/api/dashboard/summary?month=${month}&year=${year}`,
+        { withCredentials: true }
+      );
       setData(res.data);
       reportSavedRef.current = false;
     } catch (err) {
@@ -61,57 +66,49 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [month, year]);
 
-  useEffect(() => {
-    if (data?.totalSpent > 0 && data?.topCategory && user?.id) {
-      const key = `report_saved_${user.id}_${month}_${year}`;
-      const existing = JSON.parse(localStorage.getItem(key));
+ useEffect(() => {
+  if (
+    data?.totalSpent > 0 &&
+    data?.topCategory &&
+    user?.id &&
+    !isReportSaved(user.id, month, year) // ✅ check from localStorage
+  ) {
+    const saveReport = async () => {
+      try {
+        await axios.post("http://localhost:5000/api/save-report", {
+          user_id: user.id,
+          month: getMonthName(month),
+          year,
+          total_spent: data.totalSpent,
+          top_category: data.topCategory,
+          overbudget_categories: data.overbudgetCategories || [],
+        });
 
-      const needsUpdate =
-        !existing ||
-        existing.totalSpent !== data.totalSpent ||
-        existing.topCategory !== data.topCategory;
+        toast.success("📊 Monthly report saved!", {
+          toastId: "monthly-report-toast",
+        });
 
-      if (needsUpdate) {
-        const saveReport = async () => {
-          try {
-            await pythonAPI.post("/save-report", {
-              user_id: user.id,
-              month: getMonthName(month),
-              year,
-              total_spent: data.totalSpent,
-              top_category: data.topCategory,
-              overbudget_categories: data.overbudgetCategories || [],
-            });
-
-            toast.success("📊 Monthly report saved!", {
-              toastId: "monthly-report-toast",
-            });
-
-            localStorage.setItem(
-              key,
-              JSON.stringify({
-                totalSpent: data.totalSpent,
-                topCategory: data.topCategory,
-                savedAt: new Date().toISOString(),
-              })
-            );
-          } catch (err) {
-            toast.error("❌ Failed to save monthly report", {
-              toastId: "monthly-report-error",
-            });
-            console.error("❌ Error saving report:", err);
-          }
-        };
-
-        saveReport();
+        markReportSaved(user.id, month, year); // ✅ mark it saved
+      } catch (err) {
+        toast.error("❌ Failed to save monthly report", {
+          toastId: "monthly-report-error",
+        });
+        console.error("❌ Error saving report:", err);
       }
-    }
-  }, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
+    };
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/login");
-  };
+    saveReport();
+  }
+}, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
+
+
+ const handleLogout = () => {
+  localStorage.clear();
+  sessionStorage.clear();
+  document.cookie = ""; // if you're using cookies
+  setUser(null);
+  navigate("/login");
+};
 
   const goToAddExpense = () => {
     navigate("/expenses");
@@ -154,7 +151,145 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* ...unchanged JSX code from earlier... */}
+      {/* Top Bar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">
+            Welcome,{" "}
+            <span className="text-blue-600">
+              {user?.name || user?.email} 👋
+            </span>
+          </h1>
+          <p className="text-gray-600 mt-2">
+            📅 Showing data for:{" "}
+            <strong>
+              {getMonthName(month)} {year}
+            </strong>
+          </p>
+        </div>
+
+        <div className="bg-white shadow rounded p-3 mt-4 md:mt-0 w-full md:w-auto">
+          <p className="text-sm text-gray-700">
+            <strong>Name:</strong> {user?.name || "N/A"}
+          </p>
+          <p className="text-sm text-gray-700">
+            <strong>Email:</strong> {user?.email}
+          </p>
+          <button
+            onClick={handleLogout}
+            className="mt-3 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 w-full"
+          >
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Filters & Actions */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6">
+        <select
+          value={month}
+          onChange={(e) => setMonth(Number(e.target.value))}
+          className="border px-3 py-1 rounded"
+        >
+          {Array.from({ length: 12 }, (_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {getMonthName(i + 1)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="border px-3 py-1 rounded"
+        >
+          {[2023, 2024, 2025, 2026].map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={resetToCurrentMonth}
+          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+        >
+          📅 Current Month
+        </button>
+        <button
+          onClick={() => navigate("/budget-status")}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+        >
+          📊 View Budget Status
+        </button>
+        <button
+          onClick={goToAddExpense}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+        >
+          ➕ Add Expense
+        </button>
+      </div>
+
+      {/* Dashboard Summary */}
+      {data ? (
+        data.totalSpent === 0 ? (
+          <p className="text-gray-500 text-center italic my-10">
+            No data available for {getMonthName(month)} {year}.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 shadow rounded">
+                <p className="text-gray-600">Total Spent</p>
+                <p className="text-2xl font-semibold text-blue-600">
+                  ₹{data.totalSpent}
+                </p>
+              </div>
+              <div className="bg-white p-4 shadow rounded">
+                <p className="text-gray-600">Top Category</p>
+                <p className="text-2xl font-semibold text-green-600">
+                  {data.topCategory}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white p-4 shadow rounded">
+                <h2 className="text-lg font-semibold mb-2">
+                  Top Payment Methods
+                </h2>
+                <Bar data={barChartData} />
+              </div>
+              <div className="bg-white p-4 shadow rounded">
+                <h2 className="text-lg font-semibold mb-2">
+                  Spending by Category
+                </h2>
+                <Pie data={pieChartData} />
+              </div>
+            </div>
+
+            <div className="bg-white p-4 shadow rounded mb-6">
+              <h2 className="text-lg font-semibold mb-2">
+                Spending Over Time
+              </h2>
+              <Line data={lineChartData} />
+            </div>
+
+            {/* Suggestion Box */}
+            <div className="bg-white p-4 shadow rounded mb-10">
+              <SmartSuggestionBox
+                category={data.topCategory}
+                amount={data.totalSpent}
+              />
+            </div>
+
+            {/* Report History */}
+            <ReportHistory userId={user.id} />
+          </>
+        )
+      ) : (
+        <p className="text-center text-gray-500">Loading dashboard...</p>
+      )}
     </div>
   );
 };

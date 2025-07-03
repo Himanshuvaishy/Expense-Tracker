@@ -7,7 +7,7 @@ from utils.update_or_create_monthly_report import update_or_create_monthly_repor
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=[
     "http://localhost:5173",
-    "https://your-live-frontend-url.com"
+    "https://personalexpensetrack.netlify.app"
 ])
 
 # 🔍 Dummy suggestion logic

@@ -16,7 +16,7 @@ import {
   Legend,
 } from "chart.js";
 import SmartSuggestionBox from "../components/SmartSuggestionBox";
-import ReportHistory from "../components/ReportHistory";
+// import ReportHistory from "../components/ReportHistory"; // 📊 Commented out temporarily
 
 ChartJS.register(
   CategoryScale,
@@ -119,8 +119,7 @@ const Dashboard = () => {
             Welcome, <span className="text-blue-600">{user?.name || user?.email} 👋</span>
           </h1>
           <p className="text-gray-600 mt-2">
-            📅 Showing data for:{" "}
-            <strong>{getMonthName(month)} {year}</strong>
+            📅 Showing data for: <strong>{getMonthName(month)} {year}</strong>
           </p>
         </div>
 
@@ -234,7 +233,10 @@ const Dashboard = () => {
               />
             </div>
 
+            {/* 📊 Past 3 Monthly Reports section temporarily disabled */}
+            {/*
             <ReportHistory userId={user.id} />
+            */}
           </>
         )
       ) : (

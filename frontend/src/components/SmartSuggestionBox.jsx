@@ -1,5 +1,5 @@
 import { useState } from "react";
-import pythonAPI from "../axios/pythonAPI"; // ✅ Use Flask backend
+import pythonAPI from "../axios/pythonAPI"; 
 import { Lightbulb } from "lucide-react";
 
 const SmartSuggestionBox = () => {

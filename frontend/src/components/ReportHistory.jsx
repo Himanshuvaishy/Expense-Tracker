@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import pythonAPI from "../axios/pythonAPI"; // ✅ Use Flask backend
+import pythonAPI from "../axios/pythonAPI"; 
 
 const ReportHistory = ({ userId }) => {
   const [reports, setReports] = useState([]);

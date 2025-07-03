@@ -3,7 +3,7 @@ import { createContext, useContext, useState } from "react";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // initially no user
+  const [user, setUser] = useState(null); 
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
@@ -12,5 +12,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// useAuth() helper hook
+
 export const useAuth = () => useContext(AuthContext);

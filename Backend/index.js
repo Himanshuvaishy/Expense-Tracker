@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-// Routes
+
 import authRoutes from "./routes/authRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Safe CORS setup
+
 const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:5173"];
 
 const corsOptions = {
@@ -33,7 +33,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// ✅ Safe preflight handling (no crash)
+
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     res.sendStatus(204);

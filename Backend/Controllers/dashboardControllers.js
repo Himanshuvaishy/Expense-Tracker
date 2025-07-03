@@ -1,13 +1,13 @@
 import Expense from '../models/expense.js';
 export const getDashboardSummary = async (req, res) => {
-  // ✅ Use query params if provided, otherwise fallback to current date
+
   const now = new Date();
-  const month = parseInt(req.query.month) || now.getMonth() + 1; // month is 1-indexed
+  const month = parseInt(req.query.month) || now.getMonth() + 1; 
   const year = parseInt(req.query.year) || now.getFullYear();
 
-  // ✅ Calculate the first and last day of that month
+  
   const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59); // Last day of month
+  const endDate = new Date(year, month, 0, 23, 59, 59); 
 
   try {
     const expenses = await Expense.find({
@@ -22,10 +22,10 @@ export const getDashboardSummary = async (req, res) => {
     const dailyTotals = {};
 
     for (const e of expenses) {
-      // Group by category
+      
       categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
 
-      // Group by payment method
+      
       paymentTotals[e.paymentMethod] = (paymentTotals[e.paymentMethod] || 0) + e.amount;
 
       // Group by day (e.g., "2025-07-03")

@@ -1,6 +1,6 @@
 import Expense from "../models/expense.js";
 
-// ✅ Create a new expense (with lowercase category)
+
 export const createExpense = async (req, res) => {
   try {
     const normalizedCategory = req.body.category?.trim().toLowerCase();
@@ -17,13 +17,13 @@ export const createExpense = async (req, res) => {
   }
 };
 
-// ✅ Get expenses with filters
+
 export const getExpenses = async (req, res) => {
   const { category, paymentMethod, fromDate, toDate, search } = req.query;
 
   const query = { user: req.user.id };
 
-  // Normalize category for consistent filtering
+
   if (category && category.trim() !== "") {
     query.category = { $regex: new RegExp(category.trim().toLowerCase(), "i") };
   }
@@ -50,7 +50,7 @@ export const getExpenses = async (req, res) => {
   }
 };
 
-// ✅ Update expense (normalize category too)
+
 export const updateExpense = async (req, res) => {
   const { id } = req.params;
 
@@ -77,7 +77,7 @@ export const updateExpense = async (req, res) => {
   }
 };
 
-// ✅ Delete expense
+
 export const deleteExpense = async (req, res) => {
   const { id } = req.params;
 

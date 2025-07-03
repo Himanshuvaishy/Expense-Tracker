@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ✅ Register User
+
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -25,7 +25,7 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    // ✅ Auto-login after registration (optional but user-friendly)
+ 
     const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
       expiresIn: "1d",
     });
@@ -33,8 +33,8 @@ const registerUser = async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: true,           // Must be true on Render (HTTPS)
-        sameSite: "None",       // Needed for cross-origin
+        secure: true,           
+        sameSite: "None",      
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       })
       .status(200)
@@ -51,7 +51,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// ✅ Login User
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -71,8 +71,8 @@ const loginUser = async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        secure: true,           // Must be true on Render (HTTPS)
-        sameSite: "None",       // Needed for cross-origin
+        secure: true,           
+        sameSite: "None",       
         maxAge: 24 * 60 * 60 * 1000, // 1 day
       })
       .status(200)
@@ -89,7 +89,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-// ✅ Count users
 const getUserCount = async (req, res) => {
   try {
     const count = await User.countDocuments();

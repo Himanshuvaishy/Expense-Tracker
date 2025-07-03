@@ -5,5 +5,7 @@ pandas
 gunicorn
 sqlalchemy
 requests
+python-dotenv
+
 
 

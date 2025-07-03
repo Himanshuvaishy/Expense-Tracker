@@ -33,6 +33,12 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(cors(corsOptions));
+
+// ✅ Handle preflight requests globally
+app.options("*", cors(corsOptions)); // <--- This is what you're missing!
+
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", expenseRoutes);

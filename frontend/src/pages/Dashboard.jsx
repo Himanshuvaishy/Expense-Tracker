@@ -233,10 +233,7 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* 📊 Past 3 Monthly Reports section temporarily disabled */}
-            {/*
-            <ReportHistory userId={user.id} />
-            */}
+           
           </>
         )
       ) : (

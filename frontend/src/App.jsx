@@ -4,7 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
 import BudgetStatusPage from "./pages/BudgetStausPage";
-import SetBudgetPage from "./pages/setBudget";
+import SetBudgetPage from "./pages/SetBudgeBudget";
 import ProtectedRoute from "./components/ProtecteRoute";
 import DeveloperTools from "./components/DeveloperToll";
 

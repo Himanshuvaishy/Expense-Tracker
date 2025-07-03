@@ -9,7 +9,7 @@ class MonthlyReport(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(String, nullable=False)
-    month = Column(String, nullable=False)  # e.g., "July"
+    month = Column(String, nullable=False)
     year = Column(Integer, nullable=False)
     total_spent = Column(Float, default=0.0)
     top_category = Column(String)
@@ -19,8 +19,11 @@ class MonthlyReport(Base):
         UniqueConstraint('user_id', 'month', 'year', name='unique_user_month_year'),
     )
 
+    def __repr__(self):
+        return f"<MonthlyReport(user_id='{self.user_id}', month='{self.month}', year={self.year})>"
 
-# ✅ Expense Model (MISSING EARLIER)
+
+# ✅ Expense Model
 class Expense(Base):
     __tablename__ = 'expense'
 
@@ -31,8 +34,10 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     date = Column(Date, nullable=False)
 
+    def __repr__(self):
+        return f"<Expense(user_id='{self.user_id}', amount={self.amount}, date={self.date})>"
 
-# ✅ Setup SQLite DB
-engine = create_engine('sqlite:///reports.db', echo=True)
-Base.metadata.create_all(engine)
+
+# ✅ Setup SQLite DB (DO NOT auto-create on import)
+engine = create_engine('sqlite:///reports.db', echo=False)  # Turn off echo in production
 Session = sessionmaker(bind=engine)

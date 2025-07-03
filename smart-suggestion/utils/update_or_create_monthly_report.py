@@ -1,14 +1,15 @@
 from models import MonthlyReport, Session
 from datetime import datetime
+from dateutil.parser import parse as parse_date
 import requests
 import os
 
-# ✅ Read from environment variable with fallback
 NODE_API_BASE = os.getenv("NODE_API_BASE", "http://localhost:7777/api")
 
 def update_or_create_monthly_report(user_id):
     month = datetime.now().strftime("%B")
     year = datetime.now().year
+    session = None  # ✅ Safer session handling
 
     try:
         # ✅ Fetch expenses
@@ -20,10 +21,10 @@ def update_or_create_monthly_report(user_id):
         expenses = res.json()
         print(f"📦 {len(expenses)} expenses fetched.")
 
-        # ✅ Filter current month
+        # ✅ Filter for current month
         current_month_expenses = [
             exp for exp in expenses
-            if datetime.strptime(exp['date'], "%Y-%m-%dT%H:%M:%S.%fZ").month == datetime.now().month
+            if parse_date(exp['date']).month == datetime.now().month
         ]
 
         if not current_month_expenses:
@@ -32,25 +33,28 @@ def update_or_create_monthly_report(user_id):
 
         total_spent = sum(float(e["amount"]) for e in current_month_expenses)
 
-        # ✅ Top category
+        # ✅ Top category calculation
         category_totals = {}
         for e in current_month_expenses:
             cat = e["category"].strip().lower()
             category_totals[cat] = category_totals.get(cat, 0) + float(e["amount"])
         top_category = max(category_totals, key=category_totals.get)
 
-        # ✅ Fetch budgets
+        # ✅ Fetch budgets safely
+        budget_data = []
         budget_res = requests.get(f"{NODE_API_BASE}/budget/status", params={"userId": user_id})
-        budget_data = budget_res.json() if budget_res.status_code == 200 else []
+        if budget_res.status_code == 200:
+            try:
+                budget_data = budget_res.json()
+            except Exception as e:
+                print("⚠️ Failed to parse budget JSON:", str(e))
 
         overbudget = [b["category"] for b in budget_data if float(b.get("percentage", 0)) >= 100]
 
-        # ✅ Save or update
+        # ✅ Save or update report
         session = Session()
         existing = session.query(MonthlyReport).filter_by(
-            user_id=user_id,
-            month=month,
-            year=year
+            user_id=user_id, month=month, year=year
         ).first()
 
         if existing:
@@ -72,7 +76,9 @@ def update_or_create_monthly_report(user_id):
         print(f"✅ Report saved/updated for: {user_id}, {month} {year}")
 
     except Exception as e:
-        session.rollback()
+        if session:
+            session.rollback()
         print("❌ Error updating report:", str(e))
     finally:
-        session.close()
+        if session:
+            session.close()

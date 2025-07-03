@@ -6,10 +6,15 @@ from flask_cors import CORS
 from sqlalchemy import text
 from models import MonthlyReport, Session
 from utils.update_or_create_monthly_report import update_or_create_monthly_report
+from dateutil.parser import parse as parse_date
+import os
 
 app = Flask(__name__)
 
-# ✅ Improved CORS for both local & Netlify frontend
+# ✅ Debug: Show which NODE_API_BASE will be used by update function
+print("🔧 Using NODE_API_BASE:", os.getenv("NODE_API_BASE"))
+
+# ✅ CORS setup for both local & Netlify frontend
 CORS(app,
      supports_credentials=True,
      origins=[
@@ -26,6 +31,7 @@ suggestion_map = {
     "rent": ["📉 Negotiate rent", "💡 Save on utilities"],
     "others": ["🧾 Track receipts", "📊 Set spending limits"]
 }
+
 
 @app.route("/")
 def home():
@@ -126,8 +132,10 @@ def get_reports(user_id):
 def update_report(user_id):
     try:
         update_or_create_monthly_report(user_id)
+        print(f"✅ Report update triggered for {user_id}")
         return jsonify({"message": "✅ Monthly report updated"}), 200
     except Exception as e:
+        print(f"❌ Error updating monthly report for {user_id}:", e)
         return jsonify({"error": str(e)}), 500
 
 
@@ -167,7 +175,7 @@ def dashboard_summary():
         for e in expenses:
             spending_by_category[e.category] = spending_by_category.get(e.category, 0) + e.amount
             payment_methods[e.payment_method] = payment_methods.get(e.payment_method, 0) + e.amount
-            date_str = e.date.strftime("%Y-%m-%d")
+            date_str = parse_date(e.date).strftime("%Y-%m-%d")
             spending_over_time[date_str] = spending_over_time.get(date_str, 0) + e.amount
 
         top_category = max(spending_by_category.items(), key=lambda x: x[1])[0] if spending_by_category else ""

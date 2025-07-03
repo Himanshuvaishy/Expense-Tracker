@@ -4,11 +4,14 @@ load_dotenv()
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import text
-from models import MonthlyReport, Session
+from models import MonthlyReport, Session, Base, engine  # ✅ Add Base and engine
 from dateutil.parser import parse as parse_date
 import os
 
 app = Flask(__name__)
+
+# ✅ Create DB tables if they don’t exist
+Base.metadata.create_all(bind=engine)
 
 # ✅ Debug: Show NODE_API_BASE
 print("🔧 Using NODE_API_BASE:", os.getenv("NODE_API_BASE"))

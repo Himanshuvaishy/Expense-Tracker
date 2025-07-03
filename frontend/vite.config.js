@@ -2,12 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: {
-    // 👇 This is required for React Router to handle client-side routing properly
-    historyApiFallback: true,
+  resolve: {
+    alias: {
+      // Optional: your import aliases here
+    },
+  },
+  build: {
+    outDir: 'dist', // ✅ default for Vite, but explicit here
   },
 })
 

@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import text
@@ -9,10 +8,15 @@ from models import MonthlyReport, Session
 from utils.update_or_create_monthly_report import update_or_create_monthly_report
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=[
-    "http://localhost:5173",
-    "https://personalexpensetrack.netlify.app"
-])
+
+# ✅ Improved CORS for both local & Netlify frontend
+CORS(app,
+     supports_credentials=True,
+     origins=[
+         "http://localhost:5173",
+         "https://personalexpensetrack.netlify.app"
+     ],
+     allow_headers=["Content-Type", "Authorization"])
 
 # 🔍 Dummy suggestion logic
 suggestion_map = {

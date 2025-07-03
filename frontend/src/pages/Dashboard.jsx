@@ -221,6 +221,11 @@ const Dashboard = () => {
                 amount={data.totalSpent}
               />
             </div>
+<<<<<<< HEAD
+=======
+
+           
+>>>>>>> a62f31edc65596630649d1325b8cdb3736a9d29d
           </>
         )
       ) : (

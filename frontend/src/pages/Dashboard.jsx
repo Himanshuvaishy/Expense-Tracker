@@ -1,7 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { isReportSaved,markReportSaved } from "../utilis/reportStorage";
 import { useAuth } from "../context/AutoContext";
 import { useNavigate } from "react-router-dom";
 import { Pie, Bar, Line } from "react-chartjs-2";
@@ -41,9 +39,7 @@ const Dashboard = () => {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
   const [data, setData] = useState(null);
-  const reportSavedRef = useRef(false); // 🔄 used to prevent double toast
 
-  // ✅ Define before using it in JSX
   const resetToCurrentMonth = () => {
     setMonth(today.getMonth() + 1);
     setYear(today.getFullYear());
@@ -52,63 +48,28 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:7777/api/dashboard/summary?month=${month}&year=${year}`,
+        `http://localhost:7777/api/dashboard/summary?month=${month}&year=${year}&user_id=${user.id}`,
         { withCredentials: true }
       );
       setData(res.data);
-      reportSavedRef.current = false;
     } catch (err) {
       console.error("Error loading dashboard:", err);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [month, year]);
+    if (user?.id) {
+      fetchDashboardData();
+    }
+  }, [month, year, user?.id]);
 
- useEffect(() => {
-  if (
-    data?.totalSpent > 0 &&
-    data?.topCategory &&
-    user?.id &&
-    !isReportSaved(user.id, month, year) // ✅ check from localStorage
-  ) {
-    const saveReport = async () => {
-      try {
-        await axios.post("http://localhost:5000/api/save-report", {
-          user_id: user.id,
-          month: getMonthName(month),
-          year,
-          total_spent: data.totalSpent,
-          top_category: data.topCategory,
-          overbudget_categories: data.overbudgetCategories || [],
-        });
-
-        toast.success("📊 Monthly report saved!", {
-          toastId: "monthly-report-toast",
-        });
-
-        markReportSaved(user.id, month, year); // ✅ mark it saved
-      } catch (err) {
-        toast.error("❌ Failed to save monthly report", {
-          toastId: "monthly-report-error",
-        });
-        console.error("❌ Error saving report:", err);
-      }
-    };
-
-    saveReport();
-  }
-}, [data?.totalSpent, data?.topCategory, user?.id, month, year]);
-
-
- const handleLogout = () => {
-  localStorage.clear();
-  sessionStorage.clear();
-  document.cookie = ""; // if you're using cookies
-  setUser(null);
-  navigate("/login");
-};
+  const handleLogout = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie = "";
+    setUser(null);
+    navigate("/login");
+  };
 
   const goToAddExpense = () => {
     navigate("/expenses");
@@ -151,20 +112,14 @@ const Dashboard = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* Top Bar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">
-            Welcome,{" "}
-            <span className="text-blue-600">
-              {user?.name || user?.email} 👋
-            </span>
+            Welcome, <span className="text-blue-600">{user?.name || user?.email} 👋</span>
           </h1>
           <p className="text-gray-600 mt-2">
             📅 Showing data for:{" "}
-            <strong>
-              {getMonthName(month)} {year}
-            </strong>
+            <strong>{getMonthName(month)} {year}</strong>
           </p>
         </div>
 
@@ -184,7 +139,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Filters & Actions */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
         <select
           value={month}
@@ -230,7 +184,6 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Dashboard Summary */}
       {data ? (
         data.totalSpent === 0 ? (
           <p className="text-gray-500 text-center italic my-10">
@@ -269,13 +222,10 @@ const Dashboard = () => {
             </div>
 
             <div className="bg-white p-4 shadow rounded mb-6">
-              <h2 className="text-lg font-semibold mb-2">
-                Spending Over Time
-              </h2>
+              <h2 className="text-lg font-semibold mb-2">Spending Over Time</h2>
               <Line data={lineChartData} />
             </div>
 
-            {/* Suggestion Box */}
             <div className="bg-white p-4 shadow rounded mb-10">
               <SmartSuggestionBox
                 category={data.topCategory}
@@ -283,7 +233,6 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* Report History */}
             <ReportHistory userId={user.id} />
           </>
         )

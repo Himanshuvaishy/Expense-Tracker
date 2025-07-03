@@ -5,16 +5,15 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import text
 from models import MonthlyReport, Session
-from utils.update_or_create_monthly_report import update_or_create_monthly_report
 from dateutil.parser import parse as parse_date
 import os
 
 app = Flask(__name__)
 
-# ✅ Debug: Show which NODE_API_BASE will be used by update function
+# ✅ Debug: Show NODE_API_BASE
 print("🔧 Using NODE_API_BASE:", os.getenv("NODE_API_BASE"))
 
-# ✅ CORS setup for both local & Netlify frontend
+# ✅ CORS setup
 CORS(app,
      supports_credentials=True,
      origins=[
@@ -126,17 +125,6 @@ def get_reports(user_id):
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()
-
-
-@app.route("/api/reports/update/<user_id>", methods=["POST"])
-def update_report(user_id):
-    try:
-        update_or_create_monthly_report(user_id)
-        print(f"✅ Report update triggered for {user_id}")
-        return jsonify({"message": "✅ Monthly report updated"}), 200
-    except Exception as e:
-        print(f"❌ Error updating monthly report for {user_id}:", e)
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/dashboard/summary", methods=["GET"])

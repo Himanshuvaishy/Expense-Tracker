@@ -19,22 +19,19 @@ const RegisterPage = () => {
     setSuccessMsg("");
 
     try {
-      // ✅ Clear any old session/cached report data
       localStorage.clear();
       sessionStorage.clear();
 
-      // ✅ Register user via backend
       const res = await nodeAPI.post("/auth/register", {
         name,
         email,
         password,
       });
 
-      // ✅ Set success message and go to login page
       setSuccessMsg("✅ Registration successful! Redirecting to login...");
 
       setTimeout(() => {
-        navigate("/login"); // ✅ Go to login page instead of auto-login
+        navigate("/login");
       }, 1500);
     } catch (err) {
       setErrMsg(err.response?.data?.message || "❌ Registration failed");

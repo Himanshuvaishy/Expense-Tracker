@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import nodeAPI from "../axios/nodeAPI"; // ✅ Use Node.js backend
+import nodeAPI from "../axios/nodeAPI";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AutoContext";
 
@@ -141,9 +141,7 @@ const BudgetStatusPage = () => {
                       </>
                     ) : (
                       <button
-                        onClick={() =>
-                          handleEdit(item.category, item.budget)
-                        }
+                        onClick={() => handleEdit(item.category, item.budget)}
                         className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
                       >
                         Edit

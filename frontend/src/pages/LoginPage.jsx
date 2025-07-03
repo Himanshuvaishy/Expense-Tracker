@@ -26,7 +26,7 @@ const LoginPage = () => {
 
       setUser(res.data.user);
 
-      // Clean any old report flags
+      // ✅ Clean any saved report flags
       Object.keys(localStorage)
         .filter((key) => key.startsWith("report_saved_"))
         .forEach((key) => localStorage.removeItem(key));
@@ -64,6 +64,7 @@ const LoginPage = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+
         <input
           type="password"
           className="w-full p-2 border rounded"
@@ -72,6 +73,7 @@ const LoginPage = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"

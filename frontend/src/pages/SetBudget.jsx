@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import nodeAPI from "../axios/nodeAPI"; // ✅ custom axios instance
+import nodeAPI from "../axios/nodeAPI";
 
 const SetBudgetPage = () => {
   const [category, setCategory] = useState("");
@@ -9,19 +9,20 @@ const SetBudgetPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const normalizedCategory = category.trim().toLowerCase();
 
     try {
-      await nodeAPI.post(
-        "/budget/setbudget",
-        { category: normalizedCategory, amount }
-      );
+      await nodeAPI.post("/budget/setbudget", {
+        category: normalizedCategory,
+        amount: Number(amount),
+      });
+
       alert("✅ Budget set successfully!");
       navigate("/budget-status");
     } catch (err) {
       alert(
-        "Failed to set budget: " + (err.response?.data?.message || err.message)
+        "Failed to set budget: " +
+          (err.response?.data?.message || err.message)
       );
     }
   };

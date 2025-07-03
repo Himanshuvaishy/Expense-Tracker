@@ -14,7 +14,7 @@ const ReportHistory = ({ userId }) => {
       }
     };
 
-    fetchReports();
+    if (userId) fetchReports();
   }, [userId]);
 
   return (
@@ -29,7 +29,12 @@ const ReportHistory = ({ userId }) => {
               <p><strong>{report.month} {report.year}</strong></p>
               <p>🧾 Total Spent: ₹{report.total_spent}</p>
               <p>🏆 Top Category: {report.top_category}</p>
-              <p>⚠️ Overbudget: {report.overbudget_categories || "None"}</p>
+              <p>
+                ⚠️ Overbudget:{" "}
+                {report.overbudget_categories?.length
+                  ? report.overbudget_categories.join(", ")
+                  : "None"}
+              </p>
             </li>
           ))}
         </ul>

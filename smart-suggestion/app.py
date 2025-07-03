@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models import MonthlyReport, Session
-from utils.update_or_create_monthly_report import update_or_create_monthly_report  # ✅ Import your updater
+from utils.update_or_create_monthly_report import update_or_create_monthly_report
 
 app = Flask(__name__)
 CORS(app)
@@ -127,12 +127,14 @@ def update_report(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ NEW: Dashboard Summary Endpoint
+# ✅ DEBUG-ENABLED Dashboard Summary Route
 @app.route("/api/dashboard/summary", methods=["GET"])
 def dashboard_summary():
     month = request.args.get("month")
     year = request.args.get("year")
     user_id = request.args.get("user_id")
+
+    print("📥 Received query:", {"month": month, "year": year, "user_id": user_id})
 
     if not month or not year or not user_id:
         return jsonify({"error": "Month, year, and user_id are required"}), 400
@@ -150,12 +152,15 @@ def dashboard_summary():
             {"user_id": user_id, "month": month, "year": year}
         ).fetchall()
 
+        print(f"📊 {len(expenses)} expenses fetched.")
+
         total_spent = sum([e.amount for e in expenses])
         spending_by_category = {}
         payment_methods = {}
         spending_over_time = {}
 
         for e in expenses:
+            print("🧾 Expense row:", e)
             spending_by_category[e.category] = spending_by_category.get(e.category, 0) + e.amount
             payment_methods[e.payment_method] = payment_methods.get(e.payment_method, 0) + e.amount
             date_str = e.date.strftime("%Y-%m-%d")
@@ -169,10 +174,11 @@ def dashboard_summary():
             "topPaymentMethods": [{"method": k, "amount": v} for k, v in payment_methods.items()],
             "spendingByCategory": [{"category": k, "amount": v} for k, v in spending_by_category.items()],
             "spendingOverTime": [{"date": k, "amount": v} for k, v in sorted(spending_over_time.items())],
-            "overbudgetCategories": []  # Optional extension
+            "overbudgetCategories": []
         })
 
     except Exception as e:
+        print("❌ Error in dashboard summary:", e)
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()

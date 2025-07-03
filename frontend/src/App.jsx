@@ -4,6 +4,8 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Dashboard from "./pages/Dashboard";
 import BudgetStatusPage from "./pages/BudgetStausPage";
+import SetBudgetPage from "./pages/SetBudget"
+
 
 
 import ProtectedRoute from "./components/ProtecteRoute";
